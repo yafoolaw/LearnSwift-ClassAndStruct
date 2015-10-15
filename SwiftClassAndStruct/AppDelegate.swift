@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  SwiftClassAndStruct
 //
-//  Created by 刘延峰 on 15/10/12.
+//  Created by FrankLiu on 15/10/12.
 //  Copyright © 2015年 刘大帅. All rights reserved.
 //
 
