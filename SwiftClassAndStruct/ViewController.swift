@@ -187,7 +187,7 @@ enum SomeEnumeration {
 }
 
 class SomeClass {
-
+    
     static var storedTypeProperty   = "SomeValue"
     
     static var computedTypeProperty : Int {
@@ -365,6 +365,273 @@ struct Matrix {
     }
 }
 
+// MARK: 继承
+// 你可以把从父类继承的只读属性,通过添加setter,getter变成可读可写
+// 但你不能把从父类继承的可读可写属性变成只读
+// 通过添加final关键字来防止被重写,比如final var, final func, final class func, final subcript, final class
+
+// MARK: Initialization
+// 存储属性必须被初始化或者赋予缺省值,这不会触发属性观察者
+
+struct Celsius {
+    
+    var temperatureInCelsius: Double
+    
+    init(fromFahrenheit fahrenheit: Double) {
+    
+        temperatureInCelsius = (fahrenheit - 32.0)/1.8
+    }
+    
+    // 如果不写外部参数,编译器会自动生成
+    init(kelvin: Double) {
+    
+        temperatureInCelsius = kelvin - 273.15
+    }
+    
+    // 省略外部参数的写法
+    init(_ celsius: Double) {
+    
+        temperatureInCelsius = celsius
+    }
+    
+}
+
+class Food {
+    
+    var name: String
+    
+    init(name: String) {
+    
+        self.name = name
+    }
+    
+    convenience init() {
+    
+        self.init(name: "[Unnamed]")
+    }
+    
+}
+
+class RecipeIngredient: Food {
+    
+    var quantity: Int
+    
+    init(name: String, quantity: Int) {
+    
+        self.quantity = quantity
+        
+        super.init(name: name)
+    }
+    
+    override convenience init(name: String) {
+        
+        self.init(name: name, quantity: 1)
+    }
+}
+
+class ShoppingListItem: RecipeIngredient {
+    
+    var purchased = false
+    
+    var description: String {
+    
+        var outPut = "\(quantity) * \(name)"
+        
+        outPut += purchased ? " √" : " ×"
+        
+        return outPut
+    }
+}
+
+struct Animal {
+    
+    let species: String
+    
+    init?(species: String) {
+    
+        if species.isEmpty {
+        
+            return nil
+        }
+        
+        self.species = species
+    }
+}
+
+
+enum TemperatureUnit {
+
+    case Kelvin, Celsius, Fahrenheit
+    
+    // 有rawValue的枚举,自动含有init?(rawValue:)
+    init?(symbol: Character) {
+    
+        switch symbol {
+        
+            case "K":
+            
+            self = .Kelvin
+            
+            case "C":
+            
+            self = .Celsius
+            
+            case "F":
+            
+            self = .Fahrenheit
+            
+        default:
+            
+            return nil
+            
+        }
+    }
+}
+
+class Product {
+    
+    let name: String!
+    
+    init?(name: String) {
+    
+        self.name = name
+        
+        if name.isEmpty {
+        
+            return nil
+        }
+    }
+}
+
+class CartItem: Product {
+    
+    let quantity: Int!
+    
+    init?(name: String, quantity: Int) {
+        
+        self.quantity = quantity
+        
+        super.init(name: name)
+        
+        if quantity < 1 {
+        
+            return nil
+        }
+    }
+}
+
+class Document {
+    
+    var name: String?
+    
+    // 用required关键字来制定必须实现的初始化
+    required init() {}
+    
+    init?(name: String) {
+    
+        self.name = name
+        
+        if name.isEmpty {
+        
+            return nil
+        }
+    }
+}
+
+class AutomaticllyNamedDocument: Document {
+    
+    // 用required关键字来制定必须实现的初始化S
+    required init() {
+        
+        super.init()
+        
+        self.name = "[Untitled]"
+    }
+    
+    override init(name: String) {
+        
+        super.init()
+        
+        if name.isEmpty {
+        
+            self.name = "[Untitled]"
+        } else {
+        
+            self.name = name
+        }
+    }
+}
+
+// 用闭包或函数来设置缺省属性值
+// 在闭包中不能使用其他属性,self,方法,甚至是有缺省值的属性
+struct Checherboard {
+    
+    let boardColors: [Bool] = {
+    
+        var temporaryBoard = [Bool]()
+        
+        var isBlack = false
+        
+        for i in 1...10 {
+            
+            for j in 1...10 {
+            
+                temporaryBoard.append(isBlack)
+                
+                isBlack = !isBlack
+            }
+        
+            isBlack = !isBlack
+        }
+        return temporaryBoard
+    }()
+    
+    func squareIsBlackAtRow(row: Int, column: Int) -> Bool {
+    
+        return boardColors[row * 10 + column]
+    }
+}
+
+// MARK: Deinitialization
+class Bank {
+
+    static var coinsInBank = 10_000
+    
+    static func vendCoins(var numberOfCoinsToVend: Int) -> Int {
+    
+        numberOfCoinsToVend = min(numberOfCoinsToVend, coinsInBank)
+        
+        coinsInBank -= numberOfCoinsToVend
+        
+        return numberOfCoinsToVend
+    }
+    
+    static func receiveConis(coins: Int) {
+    
+        coinsInBank += coins
+    }
+}
+
+class PlayerClass {
+    
+    var coinsInPurse: Int
+    
+    init(coins: Int) {
+    
+        coinsInPurse = Bank.vendCoins(coins)
+    }
+    
+    func winCoins(coins: Int) {
+    
+        coinsInPurse += Bank.vendCoins(coins)
+    }
+    
+    deinit {
+    
+        Bank.receiveConis(coinsInPurse)
+    }
+}
+
 // MARK: ViewController
 class ViewController: UIViewController {
 
@@ -477,6 +744,77 @@ class ViewController: UIViewController {
         print(matrix)
         // 打印 "Matrix(rows: 2, columns: 2, grid: [0.0, 1.5, 3.2, 0.0])"
         
+        /* -----------------------------------------
+        
+        * Initialization
+        
+        -------------------------------------------- */
+        let boilingPointOfWater  = Celsius(fromFahrenheit: 212.0)
+        
+        let freezingPointOfWater = Celsius(kelvin: 273.15)
+        
+        let bodyTemperature      = Celsius(37.0)
+        
+        let food = Food()
+
+        let oneMysteryItem = RecipeIngredient()
+        
+        let oneBacon       = RecipeIngredient(name: "Bacon")
+        
+        let sixEggs        = RecipeIngredient(name: "Eggs", quantity: 6)
+        
+        var breakfast = [
+        
+            ShoppingListItem(),
+            ShoppingListItem(name: "Bacon"),
+            ShoppingListItem(name: "Eggs", quantity: 6)
+        ]
+        
+        breakfast[0].name = "Orange Juice"
+        
+        breakfast[0].purchased = true
+        
+        for item in breakfast {
+        
+            print(item.description )
+        }
+        
+        let anonymousCreature = Animal(species: "")
+        
+        if anonymousCreature == nil {
+        
+            print("The anonymous creature could not be initialized")
+        }
+        
+        print(Checherboard())
+        
+        /* -----------------------------------------
+        
+        * Deinitialization
+        
+        -------------------------------------------- */
+        var playerOne: PlayerClass? = PlayerClass(coins: 100)
+        
+        print("A new player has joined the game with \(playerOne!.coinsInPurse) coins")
+        // 打印 "A new player has joined the game with 100 coins"
+        
+        print("There are now \(Bank.coinsInBank) coins in the bank")
+        // 打印 "There are now 9900 coins in the bank"
+        
+        playerOne?.winCoins(2_000)
+        
+        print("PlayerOne won 2000 coins & now has \(playerOne!.coinsInPurse) coins")
+        // 打印 "PlayerOne won 2000 coins & now has 2100 coins"
+        
+        print("The bank now only has \(Bank.coinsInBank) coins left")
+        // 打印 "The bank now only has 7900 coins left"
+        
+        playerOne = nil
+        
+        print("PlayerOne has left the game")
+        
+        print("The bank now has \(Bank.coinsInBank) coins")
+        // 打印 "The bank now has 10000 coins"
     }
     
     func sleepTime(timeInterval:UInt32) {
